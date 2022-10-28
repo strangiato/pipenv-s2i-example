@@ -23,7 +23,7 @@ Pipenv attempts to solve many of these problems and should feel familiar to deve
 To get `pipenv` you can install it with `pip install pipenv`.  Once `pipenv` is installed you are ready to start installing additional packages specific to your project.  Where you might have run `pip install requests` before you can instead run `pipenv install requests` to get the exact same package.  When running `pipenv` in a project for the first time you will immediately see it create a file called `Pipfile`.  The `Pipfile` for our environment will look something like this:
 
 *Pipfile:*
-```
+```toml
 [[source]]
 url = "https://pypi.org/simple"
 verify_ssl = true
@@ -74,13 +74,13 @@ To view the completed application, please find the source code [here](https://gi
 
 To begin we can create a new `Pipfile` with fastapi by running the following:
 
-```
+```sh
 pipenv install fastapi
 ```
 
 As discussed previously, pipenv will create the `Pipfile`, `Pipfile.lock` and a virtual environment with fastapi installed in it.  To verify that we can activate the virtual environment and list the packages with the following:
 
-```
+```sh
 pipenv shell
 pip list
 ```
@@ -89,7 +89,7 @@ The output should show fastapi and fastapi's dependencies.
 
 While still in our shell we can continue to install additional packages such as `black`.  Since `black` is only needed in our development environment and not in the production application, we will use the `--dev` flag:
 
-```
+```sh
 pipenv install black --dev
 ```
 
@@ -111,7 +111,7 @@ Additionally, it is always a best practice to create an empty file called `__ini
 
 At this point your application is ready to start in your local environment.  You can run the following command with your virtual environment still active to start the application:
 
-```
+```sh
 uvicorn hello_world.main:app
 ```
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
 To test this again we can run the following:
 
-```
+```sh
 python app.py
 ```
 
@@ -151,7 +151,7 @@ ModuleNotFoundError: No module named 'uvicorn'
 
 To resolve this we can simply add the package with pipenv:
 
-```
+```sh
 pipenv install uvicorn
 ```
 
@@ -166,7 +166,7 @@ Next we need to consider how our application will build.  As mentioned before, P
 To enable either option we can set the environment variable later on in our BuildConfig or we can do it directly in our git repo with a `.s2i/environment` file:
 
 *.s2i/environment:*
-```
+```sh
 ENABLE_MICROPIPENV=True
 ```
 
@@ -175,7 +175,7 @@ Finally, the last thing we need to consider is which files are included in our a
 While most `.gitignore` files list the files we don't want to include in our git repo, I generally prefer to start by excluding all files in my `.s2iignore` and then explicitly add the ones I do need back.  This helps to prevent any extra files accidentally slipping through later on and keeps our container size to a minimum.
 
 *.s2iignore:*
-```
+```sh
 # Ignore everything
 *
 
@@ -206,7 +206,7 @@ In OpenShift a new application should appear, a build should run relatively quic
 
 In order to test our application we can create a route with the following command:
 
-```
+```sh
 oc expose svc/hello-world
 ```
 
