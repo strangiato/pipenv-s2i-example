@@ -62,11 +62,9 @@ S2i instead does away with the Dockerfile and simply ships the instructions for 
 
 S2i images do expect that you follow some standard conventions for the language in your application structure, but if necessary you can always modify or extend the default `assemble` and `run` scripts.  For Python s2i, the assemble script expects your application to have a `requirements.txt` file and the run script looks for an `app.py` file.  The assemble script does also have some options we can easily enable for `pipenv` that we will explore later.
 
-```
-Tip: When dealing with more advanced configuration options in s2i it is always great to reference the source code to see exactly what s2i is running.  You can exec into the container to view the assemble and run scripts directly in the container but most of the time I find it easier to just look it up on GitHub.  The s2i scripts for Python 3.9 can be found here:
-
-https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/
-```
+>Tip: When dealing with more advanced configuration options in s2i it is always great to reference the source code to see exactly what s2i is running.  You can exec into the container to view the assemble and run scripts directly in the container but most of the time I find it easier to just look it up on GitHub.  The s2i scripts for Python 3.9 can be found here:
+>
+>https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/
 
 ## Building Something With Pipenv and S2i
 
