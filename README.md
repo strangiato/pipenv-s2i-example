@@ -1,26 +1,35 @@
 # Pipenv and S2i: A Better Developer Experience for Python Containers
 
-When starting down the path to learning Python and attempting to containerize a Python application, there are a number of challenges developers may face when building and maintaining containerized Python applications.  In this article, we will discuss some of the common problems Python developers may commonly face and how the development experience can be improved with Pipenv and S2i.
+## Table of Contents
+
+- [Pipenv and S2i: A Better Developer Experience for Python Containers](#pipenv-and-s2i--a-better-developer-experience-for-python-containers)
+  * [Executive Summary](#executive-summary)
+  * [The Shortcomings of Pip](#the-shortcomings-of-pip)
+  * [Introducing Pipenv, Pipfile, and Pipfile.lock](#introducing-pipenv--pipfile--and-pipfilelock)
+  * [S2i vs Dockerfiles](#s2i-vs-dockerfiles)
+  * [Building Something With Pipenv and S2i](#building-something-with-pipenv-and-s2i)
+  * [Building And Deploying Our Container On OpenShift](#building-and-deploying-our-container-on-openshift)
+  * [Conclusion](#conclusion)
+
+## Executive Summary
+
+When starting down the path to learning Python and attempting to containerize a Python application, there are a number of challenges developers may face when building and maintaining containerized Python applications.  In this article, we will discuss some of the common problems Python developers may face when containerizing Python applications, and how Pipenv and s2i can help to resolve those problems.  Finally we will build a simple Python application using those tools.
 
 ## The Shortcomings of Pip
 
-`pip` is an incredibly simple and powerful tool that enables developers to easily install packages in their environment but that simplicity creates several problems that make it easy for both new and experienced developers to unknowingly introduce problems for themselves later on.
+`pip` is an incredibly simple and powerful tool that enables developers to easily install packages in their environment. That simplicity creates several problems that make it easy for both new and experienced developers to unknowingly introduce problems for themselves later on.
 
-The first challenge developers often face when attempting to containerize their application is understanding exactly what packages they need to install in their container.  Developers may have installed several different tools in their environment during development and reverse engineering which packages are needed, which are dependencies, or which are left over from other projects (more on this later) can be challenging.  
+The first challenge developers often face when attempting to containerize their application is understanding exactly what packages they need to install in their container.
 
-The `requirements.txt` file is a common pattern python developers will use for tracking what packages need to be installed in their container.  It is a simple solution that at first glance appears to solve the problem, simply requiring the execution of `pip install -r requirements.txt` in the container build process.  However, several problems can still occur with a `requirements.txt` file.  
+The `requirements.txt` file is a common pattern python developers will use for tracking what packages need to be installed in the container.  At first glance, the requirements file appears to solve the problem, simply requiring the execution of `pip install -r requirements.txt` in the container build process.  However, several problems can still occur with a `requirements.txt` file.  
 
-One issue is that developers must manually track what packages need to be added to the requirements file.  This creates a fairly minor burden on the developer to ensure that as they install packages they record those changes in the requirements file but still leaves room for error.
-
-Another issue with the requirements file is with tracking dependencies of packages a developer installs.  I may specify package `a` in my requirements file which then installs package `b` for me automatically.  This may work perfectly today but unbeknownst to me, I have potentially introduced a future dependency problem.  Package `a` defines the requirement for `b` as simply `b>=1.0.0` and does not specify an upper limit of the dependency version.  At some point package `b` releases an update which removes a feature that `a` is using and now my application is breaking.  
-
-We can try and work around this by simply pinning all of the packages our application needs, dependencies and all with something like `pip freeze > requirements.txt`.  That does get all of your dependencies but you need to make sure you are freezing from a clean environment with no extra packages or dev tools installed.
+One major issue with the requirements file is with tracking dependencies of dependencies.  A developer may specify package `a` in the requirements file which then installs package `b` automatically.  This may work perfectly today but has potentially introduced a future dependency problem.  Package `a` defines the requirement for `b` as simply `b>=1.0.0` and does not specify an upper limit of the dependency version.  At some point package `b` releases an update which removes a feature that `a` is using and now my application is breaking.  
 
 ## Introducing Pipenv, Pipfile, and Pipfile.lock
 
-Pipenv attempts to solve many of these problems and should feel familiar to developers familiar with `npm` in the node ecosystem.  `pipenv` replaces `pip` as the tool developers use to install packages.  Unlike tools like `conda`, `pipenv` installs the same packages available from pypi.org that are available with `pip`.
+Pipenv attempts to solve many of these problems. `pipenv` replaces `pip` as the tool developers use to install packages.  Unlike tools like `conda`, `pipenv` installs the same packages available from pypi.org that are available with `pip`.
 
-To get `pipenv` you can install it with `pip install pipenv`.  Once `pipenv` is installed you are ready to start installing additional packages specific to your project.  Where you might have run `pip install requests` before you can instead run `pipenv install requests` to get the exact same package.  When running `pipenv` in a project for the first time you will immediately see it create a file called `Pipfile`.  The `Pipfile` for our environment will look something like this:
+To get `pipenv` you can install it with `pip install pipenv`.  Once `pipenv` is installed you are ready to start installing additional packages specific to your project.  Where you previously would have run `pip install requests` you can instead run `pipenv install requests` to get the exact same package.  When running `pipenv` in a project for the first time you will immediately see it create a file called `Pipfile`.  The `Pipfile` after install `requests` will look like the following:
 
 *Pipfile:*
 ```toml
@@ -38,13 +47,11 @@ requests = "*"
 python_version = "3.9"
 ```
 
-Just like the `requirements.txt`, the `Pipfile` is able to capture which packages we wish to install, but `pipenv` is able to automatically update it as we install packages. It also captures some other useful information, such as the Python version we are using, and information on the Pypi repository URL in case your organization manages a Pypi proxy. Additionally, it has a section for `dev-packages` which we didn't have for our `requirements.txt` file at all.  If you wish to use an automatic code formatter in your project like `black` you can simply run `pipenv install --dev black`.  This allows you to track what packages you are using for development and keep them separate from your application requirements that are needed for deploying your final application.
+Just like the `requirements.txt`, the `Pipfile` is able to capture which packages we wish to install, but `pipenv` is able to automatically maintain the file for us. It also captures some other useful information, such as the Python version we are using. Additionally, it has a section for `dev-packages`.  If you wish to use an automatic code formatter in your project like `black` you can simply run `pipenv install black --dev` to capture the dev requirements separately from the main application requirements.
 
-`pipenv` creates another file while install applications called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies, similiar to our previous `pip freeze > requirements.txt`.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since last running `pipenv`.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidentally break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automatically generated.
+`pipenv` creates another file while install applications called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies, similar to running `pip freeze > requirements.txt`.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since last running `pipenv`.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidentally break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automatically generated.
 
-Another mistake that new Python developers often make is attempting to work from their global user Python environment.  As mentioned in the issues with `pip`, this can cause dependency confusion in your current project as well as potentially break another project that requires a specific package version.  The solution here is to utilize virtual environments.
-
-Virtual environments allow you to create a "clean" python environment that you are able to install and manage packages independently from the global Python environment.  Python has a number of tools and methods for creating and managing virtual environments which can be a bit overwhelming.  
+Another mistake that new Python developers often make is attempting to work from their global user Python environment.  Virtual environments allow you to create a "clean" python environment that you are able to install and manage packages independently from the global Python environment.  Python has a number of tools and methods for creating and managing virtual environments which can be a bit overwhelming.  
 
 Thankfully `pipenv`, like it's name implies, will manage your environment for you.  When running `pipenv install` pipenv will automatically detect if there is already a virtual environment created for this project and either create a new virtual environment or install the packages into the existing virtual environment. That virtual environment can easily be activated with `pipenv shell` allowing you to access and run your application or packages from that virtual environment. 
 
@@ -72,7 +79,7 @@ To demonstrate the capabilities of pipenv and s2i we will build a simple "Hello 
 
 To view the completed application, please find the source code [here](https://github.com/strangiato/pipenv-s2i-example).
 
-To begin we can create a new `Pipfile` with fastapi by running the following:
+To begin we can create a new `Pipfile` and virtual environment with fastapi by running the following:
 
 ```sh
 pipenv install fastapi
@@ -115,7 +122,7 @@ At this point your application is ready to start in your local environment.  You
 uvicorn hello_world.main:app
 ```
 
-I have chosen put the application file in a subfolder inside of my git repo instead of creating it in the root of the project.  While we don't have much in the `hello_world` folder, most real applications will have additional files and folders.  By starting with the application in the subfolder we are able to keep the root of the project relatively clean and readable but it also creates some flexibility for our application later on.
+I have chosen to put the application file in a subfolder inside of my git repo instead of creating it in the root of the project.  While we don't have much in the `hello_world` folder, most real applications will have additional files and folders.  By starting with the application in the subfolder we are able to keep the root of the project relatively clean and readable but it also creates some flexibility for our application later on.
 
 Our application is now functioning and we are ready to consider how we will containerize it.  The first question we need to answer is how will our application start.  As mentioned before, Python-s2i looks for an `app.py` file in the root of the project and attempts to use that to start the application.  If you browse the Python-s2i run script though you may also notice that it supports starting the application from `app.sh` if an `app.py` file isn't found.  One option is to include our uvicorn command above in the `app.sh` file but I prefer to try and keep everything as Python.  Instead we can start our application with the following:
 
