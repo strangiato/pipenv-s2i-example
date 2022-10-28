@@ -49,7 +49,7 @@ python_version = "3.9"
 
 Just like the `requirements.txt`, the `Pipfile` is able to capture which packages we wish to install, but `pipenv` is able to automatically maintain the file for us. It also captures some other useful information, such as the Python version we are using. Additionally, it has a section for `dev-packages`.  If you wish to use an automatic code formatter in your project like `black` you can simply run `pipenv install black --dev` to capture the dev requirements separately from the main application requirements.
 
-`pipenv` creates another file while install applications called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies, similar to running `pip freeze > requirements.txt`.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since last running `pipenv`.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidentally break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automatically generated.
+`pipenv` creates another file called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies, similar to running `pip freeze > requirements.txt`.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since last running `pipenv`.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidentally break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automatically generated.
 
 Another mistake that new Python developers often make is attempting to work from their global user Python environment.  Virtual environments allow you to create a "clean" python environment that you are able to install and manage packages independently from the global Python environment.  Python has a number of tools and methods for creating and managing virtual environments which can be a bit overwhelming.  
 
@@ -217,9 +217,9 @@ In order to test our application we can create a route with the following comman
 oc expose svc/hello-world
 ```
 
-We should not be able to access our API endpoint via the route and see our "Hello World' message.
+We should now be able to access our API endpoint via the route and see our "Hello World' message.
 
-To perform the same actions from the UI you can navigate to the `+Add` menu in the `Developer` view.  Next, select `Import from Git` and copy the git URL into the `Git Repo URL` field.  Next, click `Edit Import Strategy`, select `Python` and make sure a 3.9 image is automatically selected.  Update any of the object names as you would like and click `Create` when you are ready.
+To perform the same actions from the UI you can navigate to the `+Add` menu in the `Developer` view.  Next, select `Import from Git` and copy the git URL into the `Git Repo URL` field.  Next, click `Edit Import Strategy`, select `Python` and make sure a 3.9 image is automatically selected.  Update any of the object names and click `Create`.
 
 Just like with `oc new-app` a new Build should kick off and the application will deploy successfully.  Since the UI defaults to creating a route, you should be able to access the API endpoint right away.
 
