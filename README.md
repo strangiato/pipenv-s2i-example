@@ -6,11 +6,11 @@ When starting down the path to learning Python, developers are
 
 `pip` is an incredibly simple tool that enables developers to easily install packages in their environment but that simplicity creates several problems that make it easy for both new and experienced developers to unknowingly introduce problems for themselves later on.
 
-The first challenge developers often face when attempting to containerize their application is understanding exactly what packages they need to install in their container.  Developers may have installed several different tools in their environment during development and reverse engineering which packages are needed, which are dependecies, or which are left over from other projects (more on this later).  
+The first challenge developers often face when attempting to containerize their application is understanding exactly what packages they need to install in their container.  Developers may have installed several different tools in their environment during development and reverse engineering which packages are needed, which are dependencies, or which are left over from other projects (more on this later).  
 
 The `requirements.txt` file is a common pattern python developers will use for tracking what packages need to be installed in their container.  It is a simple solution that at first glance appears to solve the problem, simply requiring the execution of `pip install -r requirements.txt` in the container build process.  However, several problems can still occur with a requirements.txt file.  
 
-One issue is that developers must manually track what packages need to be added to the requirements file.  This creates a fairly minor burdon on the developer to ensure that as they install packages they record those changes in the requirements file.
+One issue is that developers must manually track what packages need to be added to the requirements file.  This creates a fairly minor burden on the developer to ensure that as they install packages they record those changes in the requirements file.
 
 Another issue with the requirements file is with tracking dependencies of packages a developer installs.  I may specify package `a` in my requirements file which then installs package `b` for me automatically.  This may work perfectly today but unbeknownst to me, I have potentially introduced a future dependency problem.  Package `a` defines the requirement for `b` as simply `b>=1.0.0` and does not specify an upper limit of the dependency version.  At some point package `b` releases an update which removes a feature that `a` is using and now my application is breaking.  
 
@@ -20,7 +20,7 @@ We can try and work around this by simply pinning all of the packages our applic
 
 Pipenv attempts to solve many of these problems and should feel familiar to developers familiar with `npm` in the node ecosystem.  `pipenv` replaces `pip` as the tool developers use to install packages.  Unlike tools like `conda`, `pipenv` installs the same packages available from pypi.org but just replaces `pip` on your local environment.
 
-To get `pipenv` you can just install it with `pip install pipenv`.  Once `pipenv` is installed you are ready to start installing packages.  Where you might have run `pip install requests` before you can instead run `pipenv install requests` to get the exact same package.  When running `pipenv` in a project for the first time you will immediatly see it create a file called `Pipfile`.  The `Pipfile` for our environment will look something like this:
+To get `pipenv` you can just install it with `pip install pipenv`.  Once `pipenv` is installed you are ready to start installing packages.  Where you might have run `pip install requests` before you can instead run `pipenv install requests` to get the exact same package.  When running `pipenv` in a project for the first time you will immediately see it create a file called `Pipfile`.  The `Pipfile` for our environment will look something like this:
 
 *Pipfile:*
 ```
@@ -38,13 +38,13 @@ requests = "*"
 python_version = "3.9"
 ```
 
-Just like the `requirements.txt`, the `Pipfile` is able to capture which packages we wish to install, but `pipenv` is able to automatically update it as we install packages. It also captures some other useful information, such as the Python version we are using, and information on the Pypi repository URL. Additionally it has a section for `dev-packages` which we didn't have for our `requirements.txt` file at all.  If you wish to use an automatic code formatter in your project like `black` you can simply run `pipenv install --dev black`.  This allows you to track what packages you are using for development and keep them seperate from your application requirements that are needed for deploying your final application.
+Just like the `requirements.txt`, the `Pipfile` is able to capture which packages we wish to install, but `pipenv` is able to automatically update it as we install packages. It also captures some other useful information, such as the Python version we are using, and information on the Pypi repository URL. Additionally it has a section for `dev-packages` which we didn't have for our `requirements.txt` file at all.  If you wish to use an automatic code formatter in your project like `black` you can simply run `pipenv install --dev black`.  This allows you to track what packages you are using for development and keep them separate from your application requirements that are needed for deploying your final application.
 
-`pipenv` creates another file while install applications though called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since then.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidently break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automiticlly generated.
+`pipenv` creates another file while install applications though called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since then.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidentally break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automatically generated.
 
-Another mistake that new Python developers often make is attempting to work from their global user Python environment.  As mentioned in the issues with `pip`, this can cause depedency confusion in your current project as well as potentially break another project that requires a specific package version.  The solution here is to utilize virtual environments.
+Another mistake that new Python developers often make is attempting to work from their global user Python environment.  As mentioned in the issues with `pip`, this can cause dependency confusion in your current project as well as potentially break another project that requires a specific package version.  The solution here is to utilize virtual environments.
 
-Virtual environments allow you to create a "clean" python environment that you are able to install and manage packages independently from the global Python environment.  Python has a number of tools and methods for creating and managing virtual enviornments which can be a bit overwhelming.  
+Virtual environments allow you to create a "clean" python environment that you are able to install and manage packages independently from the global Python environment.  Python has a number of tools and methods for creating and managing virtual environments which can be a bit overwhelming.  
 
 Thankfully `pipenv`, like it's name implies, will manage your environment for you.  When running `pipenv install` pipenv will automatically detect if there is already a virtual environment created for this project and either create a new virtual environment or install the packages into the existing virtual environment. That virtual environment can easily be activated with `pipenv shell` allowing you to access and run your application or packages from that virtual environment. 
 
@@ -56,7 +56,7 @@ Thankfully `pipenv`, like it's name implies, will manage your environment for yo
 
 ## S2i vs Dockerfile
 
-S2i (Source to Image) is a tool that enabels developers to easily generate a container image from source code without having to write a Dockerfile.  This may sound like a minor task for a seasoned containers expert, but creating an optimized image has a number of "gotchas" that many developers aren't aware of.  Correctly managing layers, properly cleaning up unneeded install artifacts, and running as non-root users are all problems that can lead to a sub-obtimial or non-functional image.  To combat this organizations will often maintain "reference" Dockerfiles and tell their developers "go copy this Dockerfile for your Python app and modify it as needed", making for a challenging maintence task down the road.  
+S2i (Source to Image) is a tool that enables developers to easily generate a container image from source code without having to write a Dockerfile.  This may sound like a minor task for a seasoned containers expert, but creating an optimized image has a number of "gotchas" that many developers aren't aware of.  Correctly managing layers, properly cleaning up unneeded install artifacts, and running as non-root users are all problems that can lead to a sub-optimal or non-functional image.  To combat this organizations will often maintain "reference" Dockerfiles and tell their developers "go copy this Dockerfile for your Python app and modify it as needed", making for a challenging maintenance task down the road.  
 
 S2i instead does away with the Dockerfile and simply ships the instructions for building the image in the image itself.  This does require you have an s2i enabled image for the language you are attempting to build but the good news is nearly all of the language specific images shipped with OpenShift are s2i enabled.  
 
@@ -80,14 +80,14 @@ To begin we can create a new `Pipfile` with fastapi by running the following:
 pipenv install fastapi
 ```
 
-As discussed previously, pipenv will create the `Pipfile`, `Pipfile.lock` and a virtual enviornment with fastapi installed in it.  To verify that we can activate the virtual enviorment and list the packages with the following:
+As discussed previously, pipenv will create the `Pipfile`, `Pipfile.lock` and a virtual environment with fastapi installed in it.  To verify that we can activate the virtual environment and list the packages with the following:
 
 ```
 pipenv shell
 pip list
 ```
 
-The output should show fastapi and fastapi's depedencies.
+The output should show fastapi and fastapi's dependencies.
 
 While still in our shell we can continue to install additional packages such as `black`.  Since `black` is only needed in our development environment and not in the production application, we will use the `--dev` flag:
 
@@ -111,7 +111,7 @@ async def root():
 
 Additionally, create an empty file called `__init__.py` in the same hello_world folder.
 
-At this point your application is ready to start in your local environment.  You can run the followig command with your virtual environment still active to start the application:
+At this point your application is ready to start in your local environment.  You can run the following command with your virtual environment still active to start the application:
 
 ```
 uvicorn hello_world.main:app
@@ -170,9 +170,9 @@ To enable either option we can set the environment variable later on in our Buil
 ENABLE_MICROPIPENV=True
 ```
 
-Finally, the last thing we need to consider is which files are included in our application.  By default s2i will do the docker equivlant of `COPY . .` which copies everything in our git repo into the container.  Our example application doesn't have a whole lot extra in it now but we may accidently introduce unwanted artifacts in our container.  For example if we later add a `tests/` folder, we don't want to include our tests in our container.  To manage what gets added to the final container we can utilize a `.s2iignore` file.  This file semantically functions exactly the same as `.gitignore` but determines what is ignored when copying the contents of our repo to the container.
+Finally, the last thing we need to consider is which files are included in our application.  By default s2i will do the docker equivalent of `COPY . .` which copies everything in our git repo into the container.  Our example application doesn't have a whole lot extra in it now but we may accidentally introduce unwanted artifacts in our container.  For example if we later add a `tests/` folder, we don't want to include our tests in our container.  To manage what gets added to the final container we can utilize a `.s2iignore` file.  This file semantically functions exactly the same as `.gitignore` but determines what is ignored when copying the contents of our repo to the container.
 
-While most `.gitignore` files list the files we don't want to include in our git repo, I generally prefer to start by excluding all files in my `.s2iignore` and then explicitly add the ones I do need back.  This helps to prevent any extra files accidently slipping through and keeps our container size to a minimum.
+While most `.gitignore` files list the files we don't want to include in our git repo, I generally prefer to start by excluding all files in my `.s2iignore` and then explicitly add the ones I do need back.  This helps to prevent any extra files accidentally slipping through and keeps our container size to a minimum.
 
 *.s2iignore:*
 ```
