@@ -95,7 +95,7 @@ While still in our shell we can continue to install additional packages such as 
 pipenv install black --dev
 ```
 
-Next we will create the main API endpoint based on the first-steps tutorial.
+Next we will create the FastAPI example application based on the first-steps tutorial.
 
 *hello_world/main.py:*
 ```python
