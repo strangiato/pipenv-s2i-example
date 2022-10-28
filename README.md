@@ -71,3 +71,121 @@ https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/
 ```
 
 ## Building Something With Pipenv and S2i
+
+To demonstrate the capabilities of pipenv and s2i we will build a simple "Hello World" application with FastAPI based on the [FastAPI First Steps Tutorial](https://fastapi.tiangolo.com/tutorial/first-steps/).
+
+To begin we can create a new `Pipfile` with fastapi by running the following:
+
+```
+pipenv install fastapi
+```
+
+As discussed previously, pipenv will create the `Pipfile`, `Pipfile.lock` and a virtual enviornment with fastapi installed in it.  To verify that we can activate the virtual enviorment and list the packages with the following:
+
+```
+pipenv shell
+pip list
+```
+
+The output should show fastapi and fastapi's depedencies.
+
+While still in our shell we can continue to install additional packages such as `black`.  Since `black` is only needed in our development environment and not in the production application, we will use the `--dev` flag:
+
+```
+pipenv install black --dev
+```
+
+Next we will create the main API endpoint based on the first-steps tutorial.
+
+hello_world/main.py
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+```
+
+Additionally, create an empty file called `__init__.py` in the same hello_world folder.
+
+At this point your application is ready to start in your local environment.  You can run the followig command with your virtual environment still active to start the application:
+
+```
+uvicorn hello_world.main:app
+```
+
+I have chosen put the application file in a subfolder inside of my git repo instead of creating it in the root of the project.  While we don't have much in the `hello_world` folder, most real applications will have additional files and folders.  By starting with the application in the subfolder we are able to keep the root of the project relatively clean and readable but it also creates some flexibility for our application later on.
+
+Our application is now functioning and we are ready to consider how we will containerize it.  The first question we need to answer is how will our application start.  As mentioned before, Python-s2i looks for an app.py file in your project and attempts to use that to start the application.  If you browse the Python-s2i run script though you may also notice that it supports starting the application from `app.sh` if an `app.py` file isn't found.  One option is to include our uvicorn command above in the `app.sh` file but I prefer to try and keep everything as Python.  Instead we can start our application with the following:
+
+app.py
+```python
+from hello_world.main import app
+
+import uvicorn
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+    )
+```
+
+To test this again we can run the following:
+
+```
+python app.py
+```
+
+This time we encounter an error since we are missing the uvicorn package:
+
+```
+Traceback (most recent call last):
+  File "/home/troyer/code/pipenv-tutorial/app.py", line 3, in <module>
+    import uvicorn
+ModuleNotFoundError: No module named 'uvicorn'
+```
+
+To resolve this we can simply add the package with pipenv:
+
+```
+pipenv install uvicorn
+```
+
+Running `app.py` again should now function correctly.
+
+Next we need to consider how our application will build.  As mentioned before, Python-s2i looks for the `requirements.txt` file by default, but it does support other build options.  If you explore the [assemble](https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/assemble) script on GitHub you will find references to two different environment variables that we can utilize, `ENABLE_PIPENV` and `ENABLE_MICROPIPENV`.
+
+`ENABLE_PIPENV` allows the assemble script to install packages from `Pipfile.lock` using the standard `pipenv` package.  `ENABLE_MICROPIPENV` will also allow us to install packages from our `Pipfile.lock` but instead utilizes a tool called [micropipenv](https://github.com/thoth-station/micropipenv) from thoth-station, an open source group sponsored by Red Hat.  Micropipenv is smaller then `pipenv`, optimized for installing packages in containers, and incredibly fast.  It also has the added benefit that it also supports Poetry, another popular alternative dependency manager to `pip` and `pipenv`.
+
+To enable either option we can set the environment variable later on in our BuildConfig or we can do it directly in our git repo with a `.s2i/environment` file:
+
+.s2i/environment
+```
+ENABLE_MICROPIPENV=True
+```
+
+Finally, the last thing we need to consider is which files are included in our application.  By default s2i will do the docker equivlant of `COPY . .` which copies everything in our git repo into the container.  Our example application doesn't have a whole lot extra in it now but we may accidently introduce unwanted artifacts in our container.  For example if we later add a `tests/` folder, we don't want to include our tests in our container.  To manage what gets added to the final container we can utilize a `.s2iignore` file.  This file semantically functions exactly the same as `.gitignore` but determines what is ignored when copying the contents of our repo to the container.
+
+While most `.gitignore` files list the files we don't want to include in our git repo, I generally prefer to start by excluding all files in my `.s2iignore` and then explicitly add the ones I do need back.  This helps to prevent any extra files accidently slipping through and keeps our container size to a minimum.
+
+.s2iignore
+```
+# Ignore everything
+*
+
+# Allow specific files
+!.s2iignore
+!.s2i/
+!hello_world/
+!LICENSE
+!Pipfile
+!Pipfile.lock
+!app.py
+```
+
