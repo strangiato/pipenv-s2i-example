@@ -22,7 +22,7 @@ Pipenv attempts to solve many of these problems and should feel familiar to deve
 
 To get `pipenv` you can just install it with `pip install pipenv`.  Once `pipenv` is installed you are ready to start installing packages.  Where you might have run `pip install requests` before you can instead run `pipenv install requests` to get the exact same package.  When running `pipenv` in a project for the first time you will immediatly see it create a file called `Pipfile`.  The `Pipfile` for our environment will look something like this:
 
-
+*Pipfile:*
 ```
 [[source]]
 url = "https://pypi.org/simple"
@@ -97,7 +97,7 @@ pipenv install black --dev
 
 Next we will create the main API endpoint based on the first-steps tutorial.
 
-hello_world/main.py
+*hello_world/main.py:*
 ```python
 from fastapi import FastAPI
 
@@ -121,7 +121,7 @@ I have chosen put the application file in a subfolder inside of my git repo inst
 
 Our application is now functioning and we are ready to consider how we will containerize it.  The first question we need to answer is how will our application start.  As mentioned before, Python-s2i looks for an app.py file in your project and attempts to use that to start the application.  If you browse the Python-s2i run script though you may also notice that it supports starting the application from `app.sh` if an `app.py` file isn't found.  One option is to include our uvicorn command above in the `app.sh` file but I prefer to try and keep everything as Python.  Instead we can start our application with the following:
 
-app.py
+*app.py:*
 ```python
 from hello_world.main import app
 
@@ -165,7 +165,7 @@ Next we need to consider how our application will build.  As mentioned before, P
 
 To enable either option we can set the environment variable later on in our BuildConfig or we can do it directly in our git repo with a `.s2i/environment` file:
 
-.s2i/environment
+*.s2i/environment:*
 ```
 ENABLE_MICROPIPENV=True
 ```
@@ -174,7 +174,7 @@ Finally, the last thing we need to consider is which files are included in our a
 
 While most `.gitignore` files list the files we don't want to include in our git repo, I generally prefer to start by excluding all files in my `.s2iignore` and then explicitly add the ones I do need back.  This helps to prevent any extra files accidently slipping through and keeps our container size to a minimum.
 
-.s2iignore
+*.s2iignore:*
 ```
 # Ignore everything
 *
