@@ -74,6 +74,8 @@ https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/
 
 To demonstrate the capabilities of pipenv and s2i we will build a simple "Hello World" application with FastAPI based on the [FastAPI First Steps Tutorial](https://fastapi.tiangolo.com/tutorial/first-steps/).
 
+To view the completed application, please find the source code [here](https://github.com/strangiato/pipenv-s2i-example).
+
 To begin we can create a new `Pipfile` with fastapi by running the following:
 
 ```
@@ -132,7 +134,7 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=8000,
+        port=8080,
     )
 ```
 
@@ -188,4 +190,33 @@ While most `.gitignore` files list the files we don't want to include in our git
 !Pipfile.lock
 !app.py
 ```
+
+The last step before we are ready to build our application is to push any code to GitHub.
+
+## Building And Deploying Our Container On OpenShift
+
+For the final step of building and deploying our container on OpenShift we have the ability to create the necessary artifacts from the command line with `oc new-app` or through the UI using the `+Add` interface.
+
+To create our application from the command line you can run the following command.  Be sure that you have set your project with `oc project` prior to running the `new-app` command.
+
+
+```sh
+oc new-app openshift/python:3.9-ubi8~https://github.com/strangiato/pipenv-s2i-example.git --name hello-world
+```
+
+In OpenShift a new application should appear, a build should run relatively quickly, and the application should start successfully.
+
+In order to test our application we can create a route with the following command:
+
+```
+oc expose svc/hello-world
+```
+
+We should not be able to access our API endpoint via the route and see our "Hello World' message.
+
+To perform the same actions from the UI you can navigate to the `+Add` menu in the `Developer` view.  Next, select `Import from Git` and copy the git URL into the `Git Repo URL` field.  Next, click `Edit Import Strategy`, select `Python` and make sure a 3.9 image is automatically selected.  Update any of the object names as you would like and click `Create` when you are ready.
+
+Just like with `oc new-app` a new Build should kick off and the application will deploy successfully.  Since the UI defaults to creating a route, you should be able to access the API endpoint right away.
+
+## Conclusion
 
