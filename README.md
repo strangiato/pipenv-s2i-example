@@ -48,13 +48,11 @@ Virtual environments allow you to create a "clean" python environment that you a
 
 Thankfully `pipenv`, like it's name implies, will manage your environment for you.  When running `pipenv install` pipenv will automatically detect if there is already a virtual environment created for this project and either create a new virtual environment or install the packages into the existing virtual environment. That virtual environment can easily be activated with `pipenv shell` allowing you to access and run your application or packages from that virtual environment. 
 
-```
-Tip: I prefer to keep my virtual environment in my project folder with my Pipfile and by default pipenv generates it in a centrally located folder.  You can change this behavior by setting the following in your .bashrc file:
-
-export PIPENV_VENV_IN_PROJECT=1
-
-With this option set, pipenv will create a .venv/ folder to manage the virtual environment directly in your project folder.  This folder can easily be deleted if you want to rebuild it from scratch or you just need to cleanup disk space.  .venv/ is a standard folder naming convention for virtual environments and should already be included on any standard Python .gitignore file.
-```
+>Tip: I prefer to keep my virtual environment in my project folder with my Pipfile and by default pipenv generates it in a centrally located folder.  You can change this behavior by setting the following in your .bashrc file:
+>
+>export PIPENV_VENV_IN_PROJECT=1
+>
+>With this option set, pipenv will create a .venv/ folder to manage the virtual environment directly in your project folder.  This folder can easily be deleted if you want to rebuild it from scratch or you just need to cleanup disk space.  .venv/ is a standard folder naming convention for virtual environments and should already be included on any standard Python .gitignore file.
 
 ## S2i vs Dockerfile
 
@@ -220,3 +218,4 @@ Just like with `oc new-app` a new Build should kick off and the application will
 
 ## Conclusion
 
+In this article we discussed some of the common problems Python developers encounter when attempting to containerize applications and how we can solve some of those problems with `pipenv` and s2i.
