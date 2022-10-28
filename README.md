@@ -40,7 +40,7 @@ python_version = "3.9"
 
 Just like the `requirements.txt`, the `Pipfile` is able to capture which packages we wish to install, but `pipenv` is able to automatically update it as we install packages. It also captures some other useful information, such as the Python version we are using, and information on the Pypi repository URL. Additionally it has a section for `dev-packages` which we didn't have for our `requirements.txt` file at all.  If you wish to use an automatic code formatter in your project like `black` you can simply run `pipenv install --dev black`.  This allows you to track what packages you are using for development and keep them seperate from your application requirements that are needed for deploying your final application.
 
-`pipenv` creates another file while install applications though called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since then.  If you need to rebuild your container several months down the line running `pipenv install` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidently break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automiticlly generated.
+`pipenv` creates another file while install applications though called `Pipfile.lock`.  The lock file handles pinning the versions of all of the packages you have installed and their dependencies.  This allows you to reinstall the exact same version of all components even if newer versions of those packages have come out since then.  If you need to rebuild your container several months down the line running `pipenv install --deploy` will install the exact package versions specified in the lock file, ensuring that changes in dependencies won't accidently break your application. `Pipfile` and `Pipfile.lock` are intended to be checked into source control so don't be intimidated by the fact that `Pipfile.lock` is automiticlly generated.
 
 Another mistake that new Python developers often make is attempting to work from their global user Python environment.  As mentioned in the issues with `pip`, this can cause depedency confusion in your current project as well as potentially break another project that requires a specific package version.  The solution here is to utilize virtual environments.
 
@@ -56,3 +56,18 @@ export PIPENV_VENV_IN_PROJECT=1
 With this option set, pipenv will create a .venv/ folder to manage the virtual environment directly in your project folder.  This folder can easily be deleted if you want to rebuild it from scratch or you just need to cleanup disk space.  .venv/ is a standard folder naming convention for virtual environments and should already be included on any standard Python .gitignore file.
 ```
 
+## S2i vs Dockerfile
+
+S2i (Source to Image) is a tool that enabels developers to easily generate a container image from source code without having to write a Dockerfile.  This may sound like a minor task for a seasoned containers expert, but creating an optimized image has a number of "gotchas" that many developers aren't aware of.  Correctly managing layers, properly cleaning up unneeded install artifacts, and running as non-root users are all problems that can lead to a sub-obtimial or non-functional image.  To combat this organizations will often maintain "reference" Dockerfiles and tell their developers "go copy this Dockerfile for your Python app and modify it as needed", making for a challenging maintence task down the road.  
+
+S2i instead does away with the Dockerfile and simply ships the instructions for building the image in the image itself.  This does require you have an s2i enabled image for the language you are attempting to build but the good news is nearly all of the language specific images shipped with OpenShift are s2i enabled.  
+
+S2i images do expect that you follow some standard conventions for the language in your application structure, but if necessary you can always modify or extend the default `assemble` and `run` scripts.  For Python s2i, the assemble script expects your application to have a `requirements.txt` file and the run script looks for an `app.py` file.  The assemble script does also have some options we can easily enable for `pipenv` that we will explore later.
+
+```
+Tip: When dealing with more advanced configuration options in s2i it is always great to reference the source code to see exactly what s2i is running.  You can exec into the container to view the assemble and run scripts directly in the container but most of the time I find it easier to just look it up on GitHub.  The s2i scripts for Python 3.9 can be found here:
+
+https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/
+```
+
+## Building Something With Pipenv and S2i
