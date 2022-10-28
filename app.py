@@ -1,4 +1,3 @@
-"""Main entrypoint for container startup."""
 from hello_world.main import app
 
 import uvicorn
