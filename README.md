@@ -3,12 +3,18 @@
 ## Table of Contents
 
 - [Pipenv and S2i: A Better Developer Experience for Python Containers](#pipenv-and-s2i--a-better-developer-experience-for-python-containers)
+  * [Table of Contents](#table-of-contents)
   * [Executive Summary](#executive-summary)
   * [The Shortcomings of Pip](#the-shortcomings-of-pip)
   * [Introducing Pipenv, Pipfile, and Pipfile.lock](#introducing-pipenv--pipfile--and-pipfilelock)
   * [S2i vs Dockerfiles](#s2i-vs-dockerfiles)
-  * [Building Something With Pipenv and S2i](#building-something-with-pipenv-and-s2i)
-  * [Building And Deploying Our Container On OpenShift](#building-and-deploying-our-container-on-openshift)
+  * [Building An Example App With Pipenv and S2i](#building-an-example-app-with-pipenv-and-s2i)
+    + [Initial Dependencies Install](#initial-dependencies-install)
+    + [Creating the Application](#creating-the-application)
+    + [Configuring the S2i Build](#configuring-the-s2i-build)
+    + [Building And Deploying Our Container On OpenShift](#building-and-deploying-our-container-on-openshift)
+      - [Creating the Application From the CLI](#creating-the-application-from-the-cli)
+      - [Creating the Application from the Web Console](#creating-the-application-from-the-web-console)
   * [Conclusion](#conclusion)
 
 ## Executive Summary
@@ -73,11 +79,13 @@ S2i images do expect that you follow some standard conventions for the language 
 >
 >https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/
 
-## Building Something With Pipenv and S2i
+## Building An Example App With Pipenv and S2i
 
 To demonstrate the capabilities of pipenv and s2i we will build a simple "Hello World" application with FastAPI based on the [FastAPI First Steps Tutorial](https://fastapi.tiangolo.com/tutorial/first-steps/).
 
 To view the completed application, please find the source code [here](https://github.com/strangiato/pipenv-s2i-example).
+
+### Initial Dependencies Install
 
 To begin we can create a new `Pipfile` and virtual environment with fastapi by running the following:
 
@@ -99,6 +107,8 @@ While still in our shell we can continue to install additional packages such as 
 ```sh
 pipenv install black --dev
 ```
+
+### Creating the Application
 
 Next we will create the FastAPI example application based on the first-steps tutorial.
 
@@ -166,6 +176,8 @@ Pipenv will capture the new dependency in the `Pipfile` and `Pipfile.lock`, givi
 
 Running `app.py` again should now function correctly.
 
+### Configuring the S2i Build
+
 Next we need to consider how our application will build.  As mentioned before, Python-s2i looks for the `requirements.txt` file by default, but it does support other build options.  If you explore the [assemble](https://github.com/sclorg/s2i-python-container/blob/master/3.9/s2i/bin/assemble) script you will find references to two different environment variables that we can utilize, `ENABLE_PIPENV` and `ENABLE_MICROPIPENV`.
 
 `ENABLE_PIPENV` allows the assemble script to install packages from `Pipfile.lock` using the standard `pipenv` package.  `ENABLE_MICROPIPENV` will also allow us to install packages from our `Pipfile.lock` but instead utilizes a tool called [micropipenv](https://github.com/thoth-station/micropipenv) from thoth-station, an open source group sponsored by Red Hat.  Micropipenv has a few advantages including that it is smaller then `pipenv`, optimized for installing packages in containers, and incredibly fast.  It also has the added benefit that it also supports Poetry, another popular alternative dependency manager to `pip` and `pipenv`.
@@ -198,9 +210,11 @@ While most `.gitignore` files list the files we don't want to include in our git
 
 The last step before we are ready to build our application with OpenShift is to push any code to GitHub.
 
-## Building And Deploying Our Container On OpenShift
+### Building And Deploying Our Container On OpenShift
 
 For the final step of building and deploying our container on OpenShift we have the ability to create the necessary artifacts from the command line with `oc new-app` or through the UI using the `+Add` interface.
+
+#### Creating the Application From the CLI
 
 To create our application from the command line you can run the following command.  Be sure that you have set your project with `oc project` prior to running the `new-app` command.
 
@@ -218,6 +232,8 @@ oc expose svc/hello-world
 ```
 
 We should now be able to access our API endpoint via the route and see our "Hello World' message.
+
+#### Creating the Application from the Web Console
 
 To perform the same actions from the UI you can navigate to the `+Add` menu in the `Developer` view.  Next, select `Import from Git` and copy the git URL into the `Git Repo URL` field.  Next, click `Edit Import Strategy`, select `Python` and make sure a 3.9 image is automatically selected.  Update any of the object names and click `Create`.
 
